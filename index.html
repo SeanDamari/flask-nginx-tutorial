@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask + Nginx | מדריך SOC-Friendly</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #e0e0e0;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(30, 30, 50, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            text-align: center;
+            border-bottom: 3px solid #00d4ff;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.2em;
+            color: #e0e0e0;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .task-section {
+            background: rgba(40, 40, 60, 0.6);
+            border-right: 4px solid #00d4ff;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .task-section:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .task-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .task-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-left: 20px;
+            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+        }
+
+        .task-title {
+            font-size: 1.8em;
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .goal {
+            background: rgba(0, 212, 255, 0.1);
+            border-right: 3px solid #00d4ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .goal-title {
+            color: #00d4ff;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .step {
+            background: rgba(50, 50, 70, 0.5);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-right: 2px solid #667eea;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+            font-size: 0.9em;
+        }
+
+        .code-block {
+            background: #1a1a2e;
+            border: 1px solid #00d4ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block pre {
+            margin: 0;
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .code-label {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            display: inline-block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .check {
+            color: #00ff88;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .important-note {
+            background: rgba(255, 193, 7, 0.15);
+            border-right: 3px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .important-note-title {
+            color: #ffc107;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .architecture {
+            background: rgba(60, 60, 80, 0.5);
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            border: 2px dashed #00d4ff;
+        }
+
+        .architecture-title {
+            color: #00d4ff;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .flow-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .arrow {
+            color: #00ff88;
+            font-size: 2em;
+        }
+
+        .success-box {
+            background: rgba(0, 255, 136, 0.1);
+            border-right: 3px solid #00ff88;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        ul {
+            margin-right: 20px;
+            margin-top: 10px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            padding-right: 10px;
+        }
+
+        footer {
+            background: rgba(20, 20, 35, 0.8);
+            padding: 30px;
+            text-align: center;
+            border-top: 2px solid #00d4ff;
+        }
+
+        footer p {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 5px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+            
+            .task-title {
+                font-size: 1.3em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .flow {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 Flask + Nginx Reverse Proxy</h1>
+            <p>מדריך מקצועי לאנליסטים של SOC | פשוט, ברור, יעיל</p>
+            <div>
+                <span class="badge">Flask</span>
+                <span class="badge">Nginx</span>
+                <span class="badge">Reverse Proxy</span>
+                <span class="badge">Linux</span>
+            </div>
+        </header>
+
+        <div class="content">
+            <!-- What is Nginx Section -->
+            <div class="task-section">
+                <div class="task-header">
+                    <div class="task-number">🌐</div>
+                    <h2 class="task-title">מה זה Nginx?</h2>
+                </div>
+
+                <div class="goal">
+                    <div class="goal-title">📖 הגדרה בסיסית</div>
+                    <p><strong>Nginx</strong> (מבוטא "Engine-X") הוא <strong>Web Server</strong> ו-<strong>Reverse Proxy Server</strong> בעל ביצועים גבוהים מאוד, קל משקל ויעיל.</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">תפקיד 1</span>
+                    <strong>Web Server</strong>
+                    <p>Nginx יכול להגיש קבצים סטטיים (HTML, CSS, JavaScript, תמונות) ישירות ללקוח בצורה מהירה ויעילה.</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">תפקיד 2</span>
+                    <strong>Reverse Proxy</strong>
+                    <p>Nginx יושב לפני שרתי אפליקציה (כמו Flask, Node.js, Django) ומקבל את כל הבקשות מהאינטרנט, מעבד אותן, ומעביר רק את הרלוונטי לשרתי האפליקציה.</p>
+                    <div class="architecture" style="margin-top: 15px;">
+                        <div class="flow">
+                            <div class="flow-item">Client</div>
+                            <span class="arrow">→</span>
+                            <div class="flow-item" style="background: linear-gradient(135deg, #00d4ff 0%, #0088cc 100%);">Nginx<br/>(Reverse Proxy)</div>
+                            <span class="arrow">→</span>
+                            <div class="flow-item">Backend<br/>(Flask/Node/etc)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">תפקיד 3</span>
+                    <strong>Load Balancer</strong>
+                    <p>Nginx יכול לחלק את העומס בין מספר שרתי backend, מה שמשפר זמינות וביצועים.</p>
+                </div>
+
+                <div class="important-note">
+                    <div class="important-note-title">💡 למה Nginx ולא Apache?</div>
+                    <ul>
+                        <li><strong>ארכיטקטורה אירועית</strong> - Nginx משתמש ב-event-driven architecture (לא thread-per-request כמו Apache)</li>
+                        <li><strong>צריכת זיכרון נמוכה</strong> - יכול להתמודד עם אלפי חיבורים במקביל עם RAM מינימלי</li>
+                        <li><strong>מהירות</strong> - מצוין להגשת static files ול-reverse proxy</li>
+                        <li><strong>יציבות</strong> - ידוע ביציבות גבוהה תחת עומס כבד</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <strong>🏢 מי משתמש ב-Nginx?</strong>
+                    <p>Netflix, Cloudflare, Dropbox, WordPress.com, GitHub, ועוד אלפי חברות גדולות בעולם.</p>
+                </div>
+            </div>
+
+            <!-- Task 1 -->
+            <div class="task-section">
+                <div class="task-header">
+                    <div class="task-number">1</div>
+                    <h2 class="task-title">Flask Web Application</h2>
+                </div>
+
+                <div class="goal">
+                    <div class="goal-title">🎯 המטרה</div>
+                    <p>להקים אפליקציית Flask בסיסית ולראות שהיא עובדת על port 5000</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 1</span>
+                    <strong>יצירת תיקיית עבודה</strong>
+                    <div class="code-block">
+                        <div class="code-label">Terminal</div>
+                        <pre>mkdir ~/myflask
+cd ~/myflask</pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 2</span>
+                    <strong>יצירת קובץ האפליקציה</strong>
+                    <div class="code-block">
+                        <div class="code-label">app.py</div>
+                        <pre>from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Hello SOC Analysts!"
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)</pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 3</span>
+                    <strong>התקנת Flask</strong>
+                    <div class="code-block">
+                        <div class="code-label">Terminal</div>
+                        <pre>sudo apt install python3-flask -y</pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 4</span>
+                    <strong>הרצת האפליקציה</strong>
+                    <div class="code-block">
+                        <div class="code-label">Terminal</div>
+                        <pre>python3 app.py</pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 5</span>
+                    <strong>בדיקה בדפדפן</strong>
+                    <div class="success-box">
+                        <span class="check">✔</span> פתח בדפדפן: <code style="color: #00ff88;">http://127.0.0.1:5000</code><br>
+                        <span class="check">✔</span> צריך לראות: <strong style="color: #00ff88;">"Hello SOC Analysts!"</strong>
+                    </div>
+                </div>
+
+                <div class="important-note">
+                    <div class="important-note-title">📌 הבנה של השלב הזה</div>
+                    <p>בשלב הזה, השרת הוא <strong>Flask בלבד</strong> - אין Nginx, אין Proxy, הכל רץ ישירות מול המשתמש. זה כמו לדבר ישירות עם השרת ללא שכבת הגנה או תיווך.</p>
+                </div>
+
+                <div class="architecture">
+                    <div class="architecture-title">ארכיטקטורה נוכחית</div>
+                    <div class="flow">
+                        <div class="flow-item">User Browser</div>
+                        <span class="arrow">→</span>
+                        <div class="flow-item">Flask :5000</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task 2 -->
+            <div class="task-section">
+                <div class="task-header">
+                    <div class="task-number">2</div>
+                    <h2 class="task-title">Adding Nginx as Reverse Proxy</h2>
+                </div>
+
+                <div class="goal">
+                    <div class="goal-title">🎯 המטרה</div>
+                    <p>לשים את Nginx לפני Flask, כך שהוא יקבל את כל הבקשות על port 80 ויעביר אותן ל-Flask</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 1</span>
+                    <strong>התקנת Nginx</strong>
+                    <div class="code-block">
+                        <div class="code-label">Terminal</div>
+                        <pre>sudo apt update
+sudo apt install nginx -y</pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 2</span>
+                    <strong>בדיקה שהשירות רץ</strong>
+                    <div class="code-block">
+                        <div class="code-label">Terminal</div>
+                        <pre>sudo systemctl status nginx</pre>
+                    </div>
+                    <div class="success-box">
+                        צריך לראות: <strong style="color: #00ff88;">active (running)</strong>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 3</span>
+                    <strong>יצירת קונפיג Nginx חדש</strong>
+                    <div class="code-block">
+                        <div class="code-label">Terminal</div>
+                        <pre>sudo nano /etc/nginx/sites-available/my-flask-app</pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 4</span>
+                    <strong>תוכן הקונפיג - הדבק את זה לקובץ</strong>
+                    <div class="code-block">
+                        <div class="code-label">my-flask-app</div>
+                        <pre>server {
+    listen 80;
+    server_name localhost;
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}</pre>
+                    </div>
+                    
+                    <div class="important-note">
+                        <div class="important-note-title">💡 מה קורה כאן?</div>
+                        <ul>
+                            <li><strong>listen 80</strong> - Nginx מקשיב על port 80 (HTTP רגיל)</li>
+                            <li><strong>proxy_pass</strong> - כל בקשה מועברת ל-Flask על port 5000</li>
+                            <li><strong>proxy_set_header</strong> - שומר מידע על הלקוח המקורי (IP, Host וכו')</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 5</span>
+                    <strong>ביטול האתר הדיפולטי של Nginx</strong>
+                    <div class="code-block">
+                        <div class="code-label">Terminal</div>
+                        <pre>sudo rm /etc/nginx/sites-enabled/default</pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 6</span>
+                    <strong>הפעלת הקונפיג החדש</strong>
+                    <div class="code-block">
+                        <div class="code-label">Terminal</div>
+                        <pre>sudo ln -s /etc/nginx/sites-available/my-flask-app /etc/nginx/sites-enabled/</pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 7</span>
+                    <strong>בדיקת תקינות הקונפיג</strong>
+                    <div class="code-block">
+                        <div class="code-label">Terminal</div>
+                        <pre>sudo nginx -t</pre>
+                    </div>
+                    <div class="success-box">
+                        צריך לראות: <strong style="color: #00ff88;">syntax is ok</strong> ו-<strong style="color: #00ff88;">test is successful</strong>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 8</span>
+                    <strong>ריסטרט ל-Nginx</strong>
+                    <div class="code-block">
+                        <div class="code-label">Terminal</div>
+                        <pre>sudo systemctl restart nginx</pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 9</span>
+                    <strong>בדיקה שה-Reverse Proxy עובד</strong>
+                    
+                    <p style="margin: 15px 0;"><strong>1. ודא ש-Flask עדיין רץ:</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">Terminal</div>
+                        <pre>python3 app.py</pre>
+                    </div>
+
+                    <p style="margin: 15px 0;"><strong>2. פתח בדפדפן:</strong></p>
+                    <div class="success-box">
+                        <span class="check">✔</span> <code style="color: #00ff88;">http://localhost</code> (ללא port!)<br>
+                        <span class="check">✔</span> <code style="color: #00ff88;">http://127.0.0.1</code><br>
+                        <span class="check">✔</span> צריך לראות: <strong style="color: #00ff88;">"Hello SOC Analysts!"</strong>
+                    </div>
+                </div>
+
+                <div class="important-note">
+                    <div class="important-note-title">📌 מה זה אומר?</div>
+                    <p>Nginx מקבל את הבקשה על port 80 → מעביר אותה ל-Flask על port 5000 → מחזיר למשתמש את התשובה.</p>
+                    <p style="margin-top: 10px;"><strong>במילים של SOC:</strong></p>
+                    <p>לפני היה <strong>direct connection</strong>, עכשיו יש <strong>שכבת תיווך</strong> (Reverse Proxy) - בדיוק כמו Gateway בבסיס או Load Balancer בארגון. זה מוסיף שכבת אבטחה, יכולת לעשות load balancing, caching, SSL termination ועוד.</p>
+                </div>
+
+                <div class="architecture">
+                    <div class="architecture-title">ארכיטקטורה עם Nginx</div>
+                    <div class="flow">
+                        <div class="flow-item">User Browser</div>
+                        <span class="arrow">→</span>
+                        <div class="flow-item">Nginx :80</div>
+                        <span class="arrow">→</span>
+                        <div class="flow-item">Flask :5000</div>
+                    </div>
+                    <p style="text-align: center; margin-top: 20px; color: #00d4ff;">
+                        <strong>הכל עובר דרך Nginx!</strong>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Detailed Step Analysis -->
+            <div class="task-section">
+                <div class="task-header">
+                    <div class="task-number">🔍</div>
+                    <h2 class="task-title">מה אני אמור לראות בכל שלב?</h2>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 1</span>
+                    <strong>sudo systemctl status nginx</strong>
+                    
+                    <div class="success-box" style="margin-top: 10px;">
+                        <strong style="color: #00ff88;">✔ תקין - מה אמור להופיע:</strong>
+                        <div class="code-block" style="margin-top: 10px;">
+                            <pre style="color: #00ff88;">● nginx.service - A high performance web server
+     Loaded: loaded (/lib/systemd/system/nginx.service; enabled)
+     Active: active (running) since [timestamp]
+   Main PID: 1234 (nginx)
+      Tasks: 2 (limit: 4915)
+     Memory: 2.5M
+     CGroup: /system.slice/nginx.service
+             ├─1234 nginx: master process
+             └─1235 nginx: worker process</pre>
+                        </div>
+                        <p style="margin-top: 10px;"><strong>מה לחפש:</strong></p>
+                        <ul>
+                            <li><code style="color: #00ff88;">Active: active (running)</code> - השירות רץ</li>
+                            <li><code style="color: #00ff88;">enabled</code> - ירוץ אוטומטית אחרי reboot</li>
+                            <li><code style="color: #00ff88;">master process</code> + <code style="color: #00ff88;">worker process</code> - התהליכים רצים</li>
+                        </ul>
+                    </div>
+
+                    <div class="important-note" style="margin-top: 15px;">
+                        <div class="important-note-title">⚠️ חריג - מה לא תקין:</div>
+                        <div class="code-block" style="margin-top: 10px;">
+                            <pre style="color: #ff4444;">Active: inactive (dead)</pre>
+                        </div>
+                        <p><strong>פתרון:</strong></p>
+                        <div class="code-block">
+                            <pre>sudo systemctl start nginx
+sudo systemctl enable nginx</pre>
+                        </div>
+
+                        <div class="code-block" style="margin-top: 10px;">
+                            <pre style="color: #ff4444;">Active: failed</pre>
+                        </div>
+                        <p><strong>פתרון:</strong></p>
+                        <div class="code-block">
+                            <pre>sudo journalctl -xe
+sudo nginx -t  # בדיקת שגיאות בקונפיג</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 2</span>
+                    <strong>sudo nginx -t (בדיקת קונפיג)</strong>
+                    
+                    <div class="success-box" style="margin-top: 10px;">
+                        <strong style="color: #00ff88;">✔ תקין - מה אמור להופיע:</strong>
+                        <div class="code-block" style="margin-top: 10px;">
+                            <pre style="color: #00ff88;">nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful</pre>
+                        </div>
+                    </div>
+
+                    <div class="important-note" style="margin-top: 15px;">
+                        <div class="important-note-title">⚠️ חריג - שגיאות נפוצות:</div>
+                        
+                        <p><strong>שגיאה 1: Port כבר תפוס</strong></p>
+                        <div class="code-block">
+                            <pre style="color: #ff4444;">nginx: [emerg] bind() to 0.0.0.0:80 failed (98: Address already in use)</pre>
+                        </div>
+                        <p><strong>פתרון:</strong></p>
+                        <div class="code-block">
+                            <pre># בדוק מי תופס את port 80
+sudo netstat -tulpn | grep :80
+# או
+sudo lsof -i :80
+
+# אם זה Apache - עצור אותו
+sudo systemctl stop apache2
+sudo systemctl disable apache2</pre>
+                        </div>
+
+                        <p style="margin-top: 15px;"><strong>שגיאה 2: שגיאת Syntax בקונפיג</strong></p>
+                        <div class="code-block">
+                            <pre style="color: #ff4444;">nginx: [emerg] unexpected "}" in /etc/nginx/sites-available/my-flask-app:10</pre>
+                        </div>
+                        <p><strong>פתרון:</strong> בדוק שכל ה-{ יש להן } תואם, ושכל שורה מסתיימת ב-;</p>
+
+                        <p style="margin-top: 15px;"><strong>שגיאה 3: קובץ לא קיים</strong></p>
+                        <div class="code-block">
+                            <pre style="color: #ff4444;">nginx: [emerg] open() "/etc/nginx/sites-enabled/my-flask-app" failed</pre>
+                        </div>
+                        <p><strong>פתרון:</strong> בדוק שעשית symlink נכון ושהקובץ קיים ב-sites-available</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">שלב 3</span>
+                    <strong>גישה דרך הדפדפן</strong>
+                    
+                    <div class="success-box" style="margin-top: 10px;">
+                        <strong style="color: #00ff88;">✔ תקין - מה אמור לקרות:</strong>
+                        <ul>
+                            <li>נגש ל-<code style="color: #00ff88;">http://localhost</code> (ללא :5000!)</li>
+                            <li>רואים: <strong style="color: #00ff88;">"Hello SOC Analysts!"</strong></li>
+                            <li>בלוג של Nginx יופיע הרשומה:</li>
+                        </ul>
+                        <div class="code-block" style="margin-top: 10px;">
+                            <pre style="color: #00ff88;">127.0.0.1 - - [19/Nov/2025:10:30:45] "GET / HTTP/1.1" 200 18</pre>
+                        </div>
+                        <p><strong>פענוח:</strong></p>
+                        <ul>
+                            <li><code>127.0.0.1</code> - כתובת ה-client</li>
+                            <li><code>GET /</code> - סוג הבקשה והנתיב</li>
+                            <li><code>200</code> - Success! (הצלחה)</li>
+                            <li><code>18</code> - גודל התגובה בבייטים</li>
+                        </ul>
+                    </div>
+
+                    <div class="important-note" style="margin-top: 15px;">
+                        <div class="important-note-title">⚠️ חריג - תקלות אפשריות:</div>
+                        
+                        <p><strong>שגיאה 1: 502 Bad Gateway</strong></p>
+                        <div class="success-box" style="background: rgba(255, 68, 68, 0.1); border-right-color: #ff4444;">
+                            <p style="color: #ff4444;">502 Bad Gateway</p>
+                        </div>
+                        <p><strong>משמעות:</strong> Nginx רץ, אבל לא יכול להתחבר ל-Flask</p>
+                        <p><strong>פתרון:</strong></p>
+                        <div class="code-block">
+                            <pre># 1. בדוק ש-Flask רץ
+ps aux | grep python3
+# אם לא רץ - הפעל:
+cd ~/myflask
+python3 app.py
+
+# 2. בדוק שהוא רץ על port 5000
+sudo netstat -tulpn | grep :5000
+
+# 3. בדוק את לוג השגיאות של Nginx
+sudo tail -f /var/log/nginx/error.log</pre>
+                        </div>
+
+                        <p style="margin-top: 15px;"><strong>שגיאה 2: 404 Not Found</strong></p>
+                        <div class="success-box" style="background: rgba(255, 193, 7, 0.1); border-right-color: #ffc107;">
+                            <p style="color: #ffc107;">404 Not Found</p>
+                        </div>
+                        <p><strong>משמעות:</strong> Nginx רץ, אבל לא מצא את הנתיב</p>
+                        <p><strong>פתרון:</strong> בדוק את הקונפיג - ה-location צריך להיות <code>/</code></p>
+
+                        <p style="margin-top: 15px;"><strong>שגיאה 3: Connection Refused</strong></p>
+                        <div class="success-box" style="background: rgba(255, 68, 68, 0.1); border-right-color: #ff4444;">
+                            <p style="color: #ff4444;">Unable to connect / Connection refused</p>
+                        </div>
+                        <p><strong>משמעות:</strong> Nginx לא רץ בכלל</p>
+                        <p><strong>פתרון:</strong></p>
+                        <div class="code-block">
+                            <pre>sudo systemctl start nginx
+sudo systemctl status nginx</pre>
+                        </div>
+
+                        <p style="margin-top: 15px;"><strong>שגיאה 4: Default Nginx Page</strong></p>
+                        <div class="success-box" style="background: rgba(255, 193, 7, 0.1); border-right-color: #ffc107;">
+                            <p style="color: #ffc107;">רואים "Welcome to nginx!" במקום האפליקציה</p>
+                        </div>
+                        <p><strong>משמעות:</strong> הקונפיג שלך לא הופעל</p>
+                        <p><strong>פתרון:</strong></p>
+                        <div class="code-block">
+                            <pre># בדוק שהקובץ קיים
+ls -la /etc/nginx/sites-enabled/
+
+# אמור לראות symlink ל-my-flask-app
+# אם לא - צור אותו מחדש:
+sudo ln -s /etc/nginx/sites-available/my-flask-app /etc/nginx/sites-enabled/
+sudo systemctl restart nginx</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">🔍</span>
+                    <strong>איך לבדוק שהכל עובד כמו שצריך?</strong>
+                    
+                    <div class="code-block" style="margin-top: 10px;">
+                        <div class="code-label">בדיקה מלאה</div>
+                        <pre># 1. Nginx רץ
+sudo systemctl status nginx | grep "active (running)"
+
+# 2. Flask רץ
+ps aux | grep "python3 app.py"
+
+# 3. Port 80 פתוח
+sudo netstat -tulpn | grep :80
+
+# 4. Port 5000 פתוח (Flask)
+sudo netstat -tulpn | grep :5000
+
+# 5. בדיקת חיבור מקומי
+curl http://localhost
+
+# 6. צפייה בלוגים בזמן אמת
+sudo tail -f /var/log/nginx/access.log</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Benefits Section -->
+            <div class="task-section">
+                <div class="task-header">
+                    <div class="task-number">✨</div>
+                    <h2 class="task-title">יתרונות וחסרונות - Nginx</h2>
+                </div>
+
+                <div class="goal">
+                    <div class="goal-title" style="color: #00ff88;">✅ יתרונות Nginx</div>
+                </div>
+
+                <div class="step">
+                    <strong>🔒 1. שכבת אבטחה נוספת (Security Layer)</strong>
+                    <ul>
+                        <li><strong>הסתרת Backend:</strong> הלקוח לא יודע מה רץ מאחורי Nginx (Flask, Django, Node.js)</li>
+                        <li><strong>Rate Limiting:</strong> מגביל כמות בקשות ממקור אחד - מונע DDoS</li>
+                        <li><strong>IP Blacklisting/Whitelisting:</strong> יכול לחסום או לאפשר IP ספציפיים</li>
+                        <li><strong>Request Filtering:</strong> יכול לסנן בקשות זדוניות (SQL Injection, XSS attempts)</li>
+                        <li><strong>SSL/TLS Termination:</strong> מטפל ב-HTTPS, Flask מקבל HTTP פשוט</li>
+                    </ul>
+                    <div class="important-note">
+                        <p><strong>דוגמה ל-SOC:</strong> אם יש התקפת DDoS, Nginx יכול לספוג חלק גדול מהעומס ולהגן על Flask שמאחוריו.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <strong>📊 2. Logging וניטור מרכזי</strong>
+                    <ul>
+                        <li><strong>Access Logs:</strong> כל בקשה נרשמת - IP, זמן, נתיב, תגובה</li>
+                        <li><strong>Error Logs:</strong> כל שגיאה מתועדת למעקב</li>
+                        <li><strong>Custom Log Format:</strong> אפשר להתאים את פורמט הלוג לצרכים</li>
+                        <li><strong>Real-time Monitoring:</strong> אפשר לחבר כלי ניטור כמו Prometheus, Grafana</li>
+                    </ul>
+                    <div class="code-block" style="margin-top: 10px;">
+                        <div class="code-label">דוגמת Log</div>
+                        <pre style="color: #00ff88;">192.168.1.100 - - [19/Nov/2025:14:25:10] "GET /api/users HTTP/1.1" 200 1523 "Mozilla/5.0"</pre>
+                    </div>
+                    <div class="important-note">
+                        <p><strong>דוגמה ל-SOC:</strong> בודק אבטחה יכול לנתח את הלוגים ולזהות דפוסי התקפה, ניסיונות פריצה, או התנהגות חשודה.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <strong>⚡ 3. ביצועים גבוהים (Performance)</strong>
+                    <ul>
+                        <li><strong>Static Files Serving:</strong> Nginx מגיש קבצים סטטיים מהר יותר מ-Flask</li>
+                        <li><strong>Caching:</strong> יכול לשמור תגובות זמן מסוים ולא לפנות ל-Flask כל פעם</li>
+                        <li><strong>Compression:</strong> דוחס תגובות (gzip) - חוסך bandwidth</li>
+                        <li><strong>Connection Pooling:</strong> מנהל חיבורים ביעילות</li>
+                        <li><strong>Load Balancing:</strong> מחלק עומס בין מספר שרתי Flask</li>
+                    </ul>
+                    <div class="architecture" style="margin-top: 15px;">
+                        <div class="architecture-title">Load Balancing דוגמה</div>
+                        <div class="flow">
+                            <div class="flow-item">Users</div>
+                            <span class="arrow">→</span>
+                            <div class="flow-item" style="background: linear-gradient(135deg, #00d4ff 0%, #0088cc 100%);">Nginx</div>
+                            <span class="arrow">→</span>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <div class="flow-item">Flask 1</div>
+                                <div class="flow-item">Flask 2</div>
+                                <div class="flow-item">Flask 3</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <strong>🎯 4. הפרדת אחריות (Separation of Concerns)</strong>
+                    <ul>
+                        <li><strong>Flask:</strong> עוסק רק בלוגיקה של האפליקציה</li>
+                        <li><strong>Nginx:</strong> מטפל ברשת, אבטחה, load balancing, caching</li>
+                        <li><strong>קל יותר לתחזק:</strong> כל מערכת עם תפקיד אחד וברור</li>
+                        <li><strong>גמישות:</strong> אפשר להחליף את Flask ב-Django/Node.js בלי לשנות את Nginx</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <strong>🌐 5. Multiple Applications</strong>
+                    <ul>
+                        <li>Nginx יכול להפנות דומיינים או נתיבים שונים לאפליקציות שונות:</li>
+                    </ul>
+                    <div class="code-block" style="margin-top: 10px;">
+                        <div class="code-label">דוגמה</div>
+                        <pre>example.com/blog → Flask App (port 5000)
+example.com/api  → Node.js (port 3000)
+example.com/shop → Django (port 8000)</pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <strong>🔄 6. Zero-Downtime Deployments</strong>
+                    <ul>
+                        <li>אפשר לעדכן את Flask בלי להוריד את האתר</li>
+                        <li>Nginx ימשיך לתת שירות בזמן העדכון</li>
+                        <li>אפשר לעשות rolling updates</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <strong>💾 7. חיסכון במשאבים של Flask</strong>
+                    <ul>
+                        <li>Flask לא צריך לטפל ב-static files</li>
+                        <li>Flask לא צריך לטפל ב-SSL/TLS</li>
+                        <li>Flask עובד פחות קשה = פחות CPU ו-RAM</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <strong>🛡️ 8. הגנה מפני התקפות נפוצות</strong>
+                    <ul>
+                        <li><strong>Slowloris Attack:</strong> Nginx מתמודד טוב עם חיבורים איטיים</li>
+                        <li><strong>Large Headers:</strong> יכול להגביל גודל headers</li>
+                        <li><strong>Request Timeout:</strong> מבטל בקשות שלוקחות יותר מדי זמן</li>
+                    </ul>
+                </div>
+
+                <!-- Disadvantages -->
+                <div class="goal" style="margin-top: 40px;">
+                    <div class="goal-title" style="color: #ff4444;">❌ חסרונות Nginx</div>
+                </div>
+
+                <div class="step">
+                    <strong>🔧 1. מורכבות נוספת (Additional Complexity)</strong>
+                    <ul>
+                        <li><strong>עוד מערכת לנהל:</strong> צריך לדעת Nginx בנוסף ל-Flask</li>
+                        <li><strong>קונפיגורציה:</strong> צריך ללמוד את syntax של Nginx</li>
+                        <li><strong>Debugging קשה יותר:</strong> צריך לבדוק שתי מערכות במקביל</li>
+                        <li><strong>תחזוקה:</strong> עדכונים, patches, security updates</li>
+                    </ul>
+                    <div class="important-note">
+                        <p><strong>דוגמה:</strong> אם משהו לא עובד, צריך לבדוק אם זה Nginx או Flask - עוד שכבה לפתור תקלות.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <strong>⏱️ 2. Latency נוסף</strong>
+                    <ul>
+                        <li>כל בקשה עוברת דרך Nginx לפני Flask - מוסיפה milliseconds</li>
+                        <li>לא משמעותי ברוב המקרים, אבל קיים</li>
+                        <li>בסביבת development פשוטה - לא תמיד צריך את זה</li>
+                    </ul>
+                    <div class="architecture" style="margin-top: 15px;">
+                        <div class="flow">
+                            <div class="flow-item">Client</div>
+                            <span class="arrow">→</span>
+                            <div class="flow-item" style="background: #ffc107;">Nginx<br/>(+2ms)</div>
+                            <span class="arrow">→</span>
+                            <div class="flow-item">Flask</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <strong>💰 3. צריכת משאבים</strong>
+                    <ul>
+                        <li>Nginx צורך RAM (אמנם מעט, אבל צורך)</li>
+                        <li>צורך CPU לעיבוד הבקשות</li>
+                        <li>במחשב חלש או container קטן - זה יכול להשפיע</li>
+                    </ul>
+                    <div class="code-block" style="margin-top: 10px;">
+                        <div class="code-label">בדיקת צריכה</div>
+                        <pre>ps aux | grep nginx
+# תראה כמה RAM ו-CPU Nginx צורך</pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <strong>🎓 4. Learning Curve</strong>
+                    <ul>
+                        <li>צריך ללמוד Nginx configuration syntax</li>
+                        <li>להבין מושגים כמו: location blocks, proxy_pass, upstream</li>
+                        <li>לדעת לקרוא ולנתח לוגים של Nginx</li>
+                        <li>להבין troubleshooting של web servers</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <strong>🐛 5. נקודת כשל נוספת (Single Point of Failure)</strong>
+                    <ul>
+                        <li>אם Nginx נופל - כל האפליקציה נופלת</li>
+                        <li>צריך לוודא ש-Nginx זמין ויציב</li>
+                        <li>צריך monitoring ל-Nginx</li>
+                        <li>צריך backup plan אם יש תקלה</li>
+                    </ul>
+                    <div class="important-note">
+                        <p><strong>פתרון:</strong> להריץ מספר instances של Nginx עם Load Balancer מעליהם (High Availability).</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <strong>📝 6. קבצי קונפיג</strong>
+                    <ul>
+                        <li>יכולים להיות מסובכים לפרויקטים גדולים</li>
+                        <li>קשה לעקוב אחרי שינויים ללא version control</li>
+                        <li>טעות בקונפיג = Nginx לא יתחיל</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <strong>🔄 7. לא תמיד נחוץ</strong>
+                    <ul>
+                        <li>לפרויקט קטן / personal project - אולי מיותר</li>
+                        <li>ל-development environment - לא חובה</li>
+                        <li>אם אין traffic גבוה - Flask לבד מספיק</li>
+                        <li>אם אין צורך ב-load balancing - Flask + Gunicorn מספיק</li>
+                    </ul>
+                </div>
+
+                <!-- Summary -->
+                <div class="architecture" style="margin-top: 40px;">
+                    <div class="architecture-title">📊 סיכום - מתי להשתמש ב-Nginx?</div>
+                    
+                    <div class="success-box" style="margin: 20px 0;">
+                        <strong style="color: #00ff88;">✅ כדאי להשתמש ב-Nginx כאשר:</strong>
+                        <ul style="margin-top: 10px;">
+                            <li>יש לך <strong>production environment</strong> עם משתמשים אמיתיים</li>
+                            <li>אתה צריך <strong>SSL/HTTPS</strong></li>
+                            <li>יש לך <strong>static files</strong> רבים (תמונות, CSS, JS)</li>
+                            <li>אתה צריך <strong>load balancing</strong> בין מספר servers</li>
+                            <li>אתה רוצה <strong>caching</strong> לביצועים</li>
+                            <li>אתה צריך <strong>security features</strong> מתקדמות</li>
+                            <li>אתה מריץ <strong>כמה אפליקציות</strong> על אותו server</li>
+                            <li>אתה רוצה <strong>logging מרכזי</strong> ומקצועי</li>
+                        </ul>
+                    </div>
+
+                    <div class="important-note">
+                        <strong style="color: #ffc107;">⚠️ אולי לא צריך Nginx כאשר:</strong>
+                        <ul style="margin-top: 10px;">
+                            <li>זה רק <strong>development environment</strong></li>
+                            <li>פרויקט <strong>אישי קטן</strong> ללא traffic</li>
+                            <li>אתה רוצה <strong>פשטות מקסימלית</strong></li>
+                            <li>אתה לא מכיר Nginx ולא רוצה ללמוד עכשיו</li>
+                            <li>אתה משתמש ב-<strong>cloud platforms</strong> שמטפלים בזה בשבילך (Heroku, Vercel, AWS Lambda)</li>
+                        </ul>
+                    </div>
+
+                    <div class="step" style="margin-top: 20px;">
+                        <strong>🎯 המלצה ל-SOC Analysts:</strong>
+                        <p>במערכות production בארגונים, <strong>כמעט תמיד משתמשים ב-Nginx או web server דומה</strong>. זה standard בתעשייה כי היתרונות גוברים על החסרונות ברוב המקרים. כבודק אבטחה, חשוב להכיר את Nginx כי הוא שכיח מאוד בסביבות שתבדוק.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Benefits Section OLD - להסיר -->
+
+            <!-- Task 3 - Log Analysis -->
+            <div class="task-section">
+                <div class="task-header">
+                    <div class="task-number">3</div>
+                    <h2 class="task-title">Log Analysis - ניתוח לוגים</h2>
+                </div>
+
+                <div class="goal">
+                    <div class="goal-title">🎯 המטרה</div>
+                    <p>עכשיו שכל התעבורה עוברת דרך Nginx, הוא יוצר logs עבור כל בקשה. נלמד לקרוא ולנתח את הלוגים האלה מנקודת מבט של SOC Analyst ושל Developer.</p>
+                </div>
+
+                <div class="step">
+                    <strong>📁 מיקום הלוגים</strong>
+                    <div class="code-block">
+                        <div class="code-label">נתיבי ברירת מחדל</div>
+                        <pre>/var/log/nginx/access.log  ← כל הבקשות
+/var/log/nginx/error.log   ← שגיאות בלבד</pre>
+                    </div>
+                </div>
+
+                <!-- Real Logs Section -->
+                <div class="step">
+                    <span class="step-number">3.1</span>
+                    <strong>הלוגים שנוצרו במערכת</strong>
+                    
+                    <p style="margin: 15px 0;"><strong>🔹 access.log - דוגמאות אמיתיות:</strong></p>
+                    <div class="code-block">
+                        <pre style="color: #00ff88; font-size: 0.85em;">127.0.0.1 - - [19/Nov/2025:20:19:58 +0200] "GET / HTTP/1.1" 200 19 "-" "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0"
+
+127.0.0.1 - - [19/Nov/2025:20:19:58 +0200] "GET /favicon.ico HTTP/1.1" 404 184 "http://localhost/" "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0"
+
+127.0.0.1 - - [19/Nov/2025:20:21:14 +0200] "GET / HTTP/1.1" 200 19 "-" "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0"
+
+127.0.0.1 - - [19/Nov/2025:20:22:13 +0200] "GET /this-page-does-not-exist HTTP/1.1" 404 184 "-" "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0"</pre>
+                    </div>
+
+                    <div class="important-note">
+                        <div class="important-note-title">🔍 פענוח הלוגים</div>
+                        <ul>
+                            <li><strong>200</strong> = בקשה מוצלחת ✔</li>
+                            <li><strong>404</strong> = משאב לא נמצא ⚠</li>
+                            <li><strong>/favicon.ico</strong> = בקשה רגילה של הדפדפן (לא חשוד)</li>
+                            <li><strong>/this-page-does-not-exist</strong> = החזיר 404 כצפוי ✔</li>
+                            <li><strong>127.0.0.1</strong> = כל הבקשות מהמכונה המקומית</li>
+                        </ul>
+                        <p style="margin-top: 10px;"><strong>זוהי התנהגות תקינה לחלוטין</strong></p>
+                    </div>
+
+                    <p style="margin: 20px 0;"><strong>🔹 error.log - דוגמה אמיתית:</strong></p>
+                    <div class="code-block">
+                        <pre style="color: #ffc107;">2025/11/19 20:05:28 [notice] 37162#37162: using inherited sockets from "5;6;"</pre>
+                    </div>
+
+                    <div class="success-box">
+                        <strong>✔ זו לא שגיאה!</strong>
+                        <ul style="margin-top: 10px;">
+                            <li>זה הודעת <strong>notice</strong> (מידע בלבד)</li>
+                            <li>מופיעה כאשר Nginx עושה reload</li>
+                            <li>אין כאן misconfigurations</li>
+                            <li>אין כאן כשלים פנימיים או אנומליות אבטחה</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Questions and Answers Section -->
+                <div class="architecture" style="margin-top: 30px;">
+                    <div class="architecture-title">💬 שאלות ותשובות - Task 3</div>
+                </div>
+
+                <div class="step">
+                    <strong>❓ שאלה 1: מה ההבדל בין access.log ל-error.log?</strong>
+                    
+                    <div style="margin: 15px 0;">
+                        <div class="success-box" style="background: rgba(0, 212, 255, 0.1); border-right-color: #00d4ff;">
+                            <strong style="color: #00d4ff;">📄 access.log</strong>
+                            <ul style="margin-top: 10px;">
+                                <li>רושם <strong>כל בקשה</strong> לשרת</li>
+                                <li>כולל: IP, URL, HTTP method, status code, user-agent</li>
+                                <li><strong>שימושים:</strong>
+                                    <ul style="margin-right: 20px;">
+                                        <li>ניתוח תעבורה</li>
+                                        <li>התנהגות משתמשים</li>
+                                        <li>ביצועים</li>
+                                        <li>חקירות אבטחה</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="important-note" style="margin-top: 15px;">
+                            <strong style="color: #ff4444;">⚠️ error.log</strong>
+                            <ul style="margin-top: 10px;">
+                                <li>רושם רק <strong>בעיות צד שרת</strong></li>
+                                <li><strong>דוגמאות:</strong>
+                                    <ul style="margin-right: 20px;">
+                                        <li>קובץ לא נמצא (שגיאות שרת אמיתיות)</li>
+                                        <li>כשלים ב-Upstream (Flask)</li>
+                                        <li>שגיאות הרשאות</li>
+                                        <li>בעיות קונפיגורציה</li>
+                                    </ul>
+                                </li>
+                                <li><strong>שימושים:</strong>
+                                    <ul style="margin-right: 20px;">
+                                        <li>Debugging כשלים</li>
+                                        <li>זיהוי misconfigurations</li>
+                                        <li>זיהוי ניסיונות exploitation</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <strong>❓ שאלה 2: Developer Perspective - איך access.log שימושי למפתח?</strong>
+                    
+                    <div class="success-box" style="margin-top: 10px;">
+                        <p><strong>מפתח משתמש ב-access.log כדי לראות:</strong></p>
+                        <ul style="margin-top: 10px;">
+                            <li>🔍 <strong>אילו routes משתמשים מבקרים</strong></li>
+                            <li>❌ <strong>אילו דפים מחזירים שגיאות</strong> (404, 500)</li>
+                            <li>✨ <strong>האם feature חדש מתנהג נכון</strong></li>
+                            <li>🗺️ <strong>איך משתמשים נעים בין דפים</strong> ("user journey")</li>
+                        </ul>
+                        
+                        <div class="code-block" style="margin-top: 15px;">
+                            <div class="code-label">דוגמה</div>
+                            <pre>אם /settings פתאום מחזיר הרבה קודי 500 
+→ המפתח יודע שמשהו נשבר בקוד</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <strong>❓ שאלה 3: משתמש מדווח "Page Not Found" - איזה לוג לבדוק ראשון? למה?</strong>
+                    
+                    <div class="success-box" style="margin-top: 10px;">
+                        <p><strong>📌 ראשית: access.log</strong></p>
+                        <ul style="margin-top: 10px;">
+                            <li>כדי לאשר את ה-URL שהמשתמש ביקש</li>
+                            <li>כדי לראות את קוד הסטטוס המדויק</li>
+                            <li>כדי לוודא אם המשתמש טעה בנתיב או שהאפליקציה לא מגישה אותו</li>
+                        </ul>
+
+                        <p style="margin-top: 15px;"><strong>📌 אחר כך: error.log</strong></p>
+                        <ul style="margin-top: 10px;">
+                            <li>כדי לראות למה השרת לא מצא את הקובץ</li>
+                            <li>לדוגמה: <code style="color: #ff4444;">open() ".../this-page-does-not-exist" failed</code></li>
+                        </ul>
+                    </div>
+
+                    <div class="code-block" style="margin-top: 15px;">
+                        <div class="code-label">פקודות בדיקה</div>
+                        <pre># בדוק את access.log
+sudo tail -50 /var/log/nginx/access.log | grep "404"
+
+# בדוק את error.log
+sudo tail -50 /var/log/nginx/error.log</pre>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <strong>❓ שאלה 4: SOC Perspective - איזה לוג יותר חשוב לזיהוי תוקפים?</strong>
+                    
+                    <div class="success-box" style="margin-top: 10px; background: rgba(255, 68, 68, 0.1); border-right-color: #ff4444;">
+                        <p><strong style="color: #ff4444;">✔ access.log - הכי חשוב!</strong></p>
+                        <p style="margin-top: 10px;"><strong>הוא מכיל:</strong></p>
+                        <ul style="margin-top: 10px;">
+                            <li>🎯 <strong>IP של התוקף</strong></li>
+                            <li>🔗 <strong>URLs שביקש</strong></li>
+                            <li>⚡ <strong>תדירות הבקשות</strong></li>
+                            <li>🚨 <strong>נתיבים חשודים</strong></li>
+                            <li>🔍 <strong>User-Agent</strong> (חתימות כלים)</li>
+                            <li>⏰ <strong>Timestamps</strong></li>
+                        </ul>
+
+                        <div class="code-block" style="margin-top: 15px;">
+                            <div class="code-label">דוגמה להתנהגות עוינת</div>
+                            <pre style="color: #ff4444;">200 requests/sec from 45.91.x.x to:
+  /admin
+  /backup.zip
+  /../../etc/passwd
+  /.env
+  /wp-admin/
+  /phpmyadmin/</pre>
+                        </div>
+
+                        <p style="margin-top: 15px;"><strong>זה מעיד על:</strong></p>
+                        <ul>
+                            <li>🔍 Scanning</li>
+                            <li>💥 Directory brute-force</li>
+                            <li>🕵️ Reconnaissance</li>
+                            <li>⚔️ ניסיונות Exploitation</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <strong>❓ שאלה 5: איזו התקפה יכולה להתרחש אם רואים מאות בקשות לשנייה מ-IP אחד?</strong>
+                    
+                    <div class="important-note">
+                        <div class="important-note-title">⚠️ התקפות אפשריות</div>
+                        <ul style="margin-top: 10px;">
+                            <li><strong>Directory Bruteforce / Enumeration</strong> - חיפוש אחר קבצים ותיקיות נסתרות</li>
+                            <li><strong>Fuzzing / Reconnaissance</strong> - איסוף מידע על המערכת</li>
+                            <li><strong>Automated Scanning</strong> - כלים כמו gobuster, dirb, nikto</li>
+                            <li><strong>Application DDoS</strong> - ניסיון להפיל את השרת</li>
+                            <li><strong>Credential Stuffing</strong> - אם יש POST requests</li>
+                        </ul>
+
+                        <div class="code-block" style="margin-top: 15px;">
+                            <div class="code-label">איך לזהות</div>
+                            <pre># ספירת בקשות לפי IP
+awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -rn
+
+# דוגמת פלט חשוד:
+# 1847 45.91.123.45  ← מסוכן!
+#   12 192.168.1.10  ← נורמלי
+#    5 10.0.0.5      ← נורמלי</pre>
+                        </div>
+
+                        <p style="margin-top: 15px; color: #ff4444;"><strong>זוהי התנהגות עוינת קלאסית!</strong></p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <strong>❓ שאלה 6: איך error.log עוזר לזהות misconfigurations או התקפות מתוחכמות?</strong>
+                    
+                    <div class="success-box" style="margin-top: 10px;">
+                        <p><strong>error.log חושף:</strong></p>
+                        <ul style="margin-top: 10px;">
+                            <li>🔧 <strong>Routes שבורים</strong></li>
+                            <li>💔 <strong>Backend חסר</strong> (502/504 מ-Flask)</li>
+                            <li>🔒 <strong>בעיות הרשאות</strong></li>
+                            <li>🚨 <strong>ניסיונות Path Traversal</strong></li>
+                            <li>💥 <strong>קריסות אחרי payloads זדוניים</strong></li>
+                        </ul>
+
+                        <div class="code-block" style="margin-top: 15px;">
+                            <div class="code-label">דוגמאות לאינדיקטורים של התקפה</div>
+                            <pre style="color: #ff4444;">[error] open() "/var/www/../../../../etc/passwd" failed
+
+[error] upstream prematurely closed connection while reading response header
+
+[error] recv() failed (104: Connection reset by peer) while reading response header
+
+[crit] SSL_do_handshake() failed (SSL: error:...) while SSL handshaking</pre>
+                        </div>
+
+                        <p style="margin-top: 15px;"><strong>זה עוזר לזהות:</strong></p>
+                        <ul>
+                            <li>⚔️ ניסיונות Exploit</li>
+                            <li>⚙️ חוקי Nginx לא מוגדרים כראוי</li>
+                            <li>💥 רכיבים שקורסים</li>
+                            <li>🔐 ניסיונות bypass authentication</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Practical SOC Analysis -->
+                <div class="architecture" style="margin-top: 30px;">
+                    <div class="architecture-title">🛡️ ניתוח SOC מעשי</div>
+                    
+                    <div class="step">
+                        <strong>פקודות חיוניות לאנליסט SOC</strong>
+                        
+                        <div class="code-block" style="margin-top: 10px;">
+                            <div class="code-label">1. ניטור בזמן אמת</div>
+                            <pre>sudo tail -f /var/log/nginx/access.log
+sudo tail -f /var/log/nginx/error.log</pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-label">2. מציאת IP החשודים ביותר</div>
+                            <pre>awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -rn | head -20</pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-label">3. חיפוש אחר נתיבים חשודים</div>
+                            <pre>grep -E "(admin|backup|\.\.\/|passwd|shadow|config)" /var/log/nginx/access.log</pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-label">4. קודי שגיאה חשודים</div>
+                            <pre># 403 - ניסיונות גישה אסורה
+grep " 403 " /var/log/nginx/access.log
+
+# 404 - scanning אפשרי
+grep " 404 " /var/log/nginx/access.log | wc -l
+
+# 500 - אפליקציה קרסה (אולי exploit)
+grep " 500 " /var/log/nginx/access.log</pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-label">5. User-Agents חשודים</div>
+                            <pre>awk -F\" '{print $6}' /var/log/nginx/access.log | sort | uniq -c | sort -rn
+
+# חפש:
+# - Python-requests
+# - curl
+# - sqlmap
+# - nikto
+# - gobuster</pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-label">6. בקשות לפי שעה (זיהוי דפוסים)</div>
+                            <pre>awk '{print $4}' /var/log/nginx/access.log | cut -d: -f1-2 | sort | uniq -c</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Box -->
+                <div class="important-note" style="margin-top: 30px; background: rgba(102, 126, 234, 0.15); border-right-color: #667eea;">
+                    <div class="important-note-title" style="color: #667eea;">🎯 לסיכום Task 3</div>
+                    <ul style="margin-top: 10px;">
+                        <li><strong>access.log</strong> = הכלי המרכזי לזיהוי תוקפים ו-traffic analysis</li>
+                        <li><strong>error.log</strong> = חיוני לזיהוי exploits, crashes ו-misconfigurations</li>
+                        <li><strong>שילוב של שני הלוגים</strong> נותן תמונה מלאה של מצב האבטחה</li>
+                        <li><strong>ניטור אקטיבי</strong> + כלי אוטומציה = SOC יעיל</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Quick Commands -->
+            <div class="task-section">
+                <div class="task-header">
+                    <div class="task-number">⚡</div>
+                    <h2 class="task-title">פקודות שימושיות</h2>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-label">בדיקת סטטוס Nginx</div>
+                    <pre>sudo systemctl status nginx</pre>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-label">עצירת Nginx</div>
+                    <pre>sudo systemctl stop nginx</pre>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-label">הפעלת Nginx</div>
+                    <pre>sudo systemctl start nginx</pre>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-label">ריסטרט Nginx</div>
+                    <pre>sudo systemctl restart nginx</pre>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-label">צפייה בלוגים של Nginx</div>
+                    <pre>sudo tail -f /var/log/nginx/access.log
+sudo tail -f /var/log/nginx/error.log</pre>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-label">בדיקת תקינות קונפיג</div>
+                    <pre>sudo nginx -t</pre>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>🔐 מדריך נוצר עבור אנליסטים של SOC | Flask + Nginx Reverse Proxy Setup</p>
+            <p style="margin-top: 10px;">עם אהבה מהצוות הטכני 💙</p>
+        </footer>
+    </div>
+</body>
+</html>
